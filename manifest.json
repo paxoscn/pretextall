@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "pretextall",
+  "name": "文字互动动画",
   "version": "1.0.0",
   "description": "让自定义动画跟随鼠标与网页文字产生互动效果",
   "permissions": [
@@ -18,14 +18,14 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["pretext-loader.js", "content.js"],
       "css": ["content.css"],
       "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
+      "resources": ["icons/*", "pretext-lib/*"],
       "matches": ["<all_urls>"]
     }
   ]

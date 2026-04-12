@@ -1,0 +1,15 @@
+{
+  "name": "pretextall",
+  "version": "1.0.0",
+  "description": "一个基于 [pretext](https://github.com/chenglou/pretext) 思想的 Chrome 浏览器插件，让自定义动画跟随鼠标与网页文字产生互动效果。",
+  "main": "content.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@chenglou/pretext": "^0.0.5"
+  }
+}

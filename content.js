@@ -1,5 +1,5 @@
-// 文字互动动画 Content Script
-// 基于 pretext 的思想实现文字与动画的互动效果
+// 文字互动动画 - 使用 pretext 库实现
+// 基于 https://github.com/chenglou/pretext
 
 class TextInteractionAnimation {
   constructor() {
@@ -11,8 +11,8 @@ class TextInteractionAnimation {
     this.mouseX = 0;
     this.mouseY = 0;
     this.animationElement = null;
-    this.textNodes = [];
-    this.textPositions = new Map();
+    this.textElements = [];
+    this.preparedTexts = new Map(); // 存储 pretext 准备好的文本
     this.animationFrame = null;
     
     this.init();
@@ -29,7 +29,7 @@ class TextInteractionAnimation {
 
     if (this.enabled) {
       this.createAnimationElement();
-      this.scanTextNodes();
+      this.scanAndPrepareText();
       this.startAnimation();
     }
 
@@ -42,7 +42,7 @@ class TextInteractionAnimation {
     // 监听页面变化，重新扫描文字
     const observer = new MutationObserver(() => {
       if (this.enabled) {
-        this.scanTextNodes();
+        this.scanAndPrepareText();
       }
     });
     observer.observe(document.body, { 
@@ -52,7 +52,9 @@ class TextInteractionAnimation {
 
     // 监听滚动和窗口大小变化
     window.addEventListener('scroll', () => this.updateTextPositions(), { passive: true });
-    window.addEventListener('resize', () => this.updateTextPositions());
+    window.addEventListener('resize', () => {
+      this.scanAndPrepareText();
+    });
   }
 
   createAnimationElement() {
@@ -87,54 +89,93 @@ class TextInteractionAnimation {
     document.body.appendChild(this.animationElement);
   }
 
-  scanTextNodes() {
-    this.textNodes = [];
-    this.textPositions.clear();
+  scanAndPrepareText() {
+    this.textElements = [];
+    this.preparedTexts.clear();
 
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          // 过滤掉脚本、样式和空白文本
-          if (node.parentElement.tagName === 'SCRIPT' || 
-              node.parentElement.tagName === 'STYLE' ||
-              node.textContent.trim().length === 0) {
-            return NodeFilter.FILTER_REJECT;
-          }
-          return NodeFilter.FILTER_ACCEPT;
+    // 获取所有可见的文本元素
+    const elements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, div, a, li, td, th, label, button');
+    
+    elements.forEach((element, index) => {
+      const text = element.textContent.trim();
+      if (text.length === 0) return;
+
+      // 获取元素的计算样式
+      const style = window.getComputedStyle(element);
+      const fontSize = style.fontSize;
+      const fontFamily = style.fontFamily;
+      const fontWeight = style.fontWeight;
+      const fontStyle = style.fontStyle;
+      
+      // 构建 font 字符串（pretext 需要的格式）
+      const font = `${fontStyle !== 'normal' ? fontStyle + ' ' : ''}${fontWeight !== '400' ? fontWeight + ' ' : ''}${fontSize} ${fontFamily}`;
+
+      try {
+        // 使用 pretext 准备文本
+        if (typeof window.pretext !== 'undefined' && window.pretext.prepare) {
+          const prepared = window.pretext.prepare(text, font);
+          
+          this.textElements.push({
+            element,
+            text,
+            font,
+            prepared,
+            index
+          });
+          
+          this.preparedTexts.set(index, {
+            prepared,
+            element,
+            bounds: null
+          });
         }
+      } catch (e) {
+        // 如果 pretext 出错，跳过这个元素
+        console.warn('Pretext preparation failed:', e);
       }
-    );
-
-    let node;
-    while (node = walker.nextNode()) {
-      this.textNodes.push(node);
-    }
+    });
 
     this.updateTextPositions();
   }
 
   updateTextPositions() {
-    this.textPositions.clear();
-
-    this.textNodes.forEach(node => {
-      const range = document.createRange();
-      range.selectNodeContents(node);
-      const rects = range.getClientRects();
+    this.preparedTexts.forEach((data, index) => {
+      const rect = data.element.getBoundingClientRect();
       
-      const positions = [];
-      for (let rect of rects) {
-        positions.push({
-          x: rect.left + rect.width / 2,
-          y: rect.top + rect.height / 2,
-          width: rect.width,
-          height: rect.height
-        });
-      }
-      
-      if (positions.length > 0) {
-        this.textPositions.set(node, positions);
+      if (rect.width > 0 && rect.height > 0) {
+        // 使用 pretext 的 layout 函数计算文本布局
+        try {
+          if (typeof window.pretext !== 'undefined' && window.pretext.layout) {
+            const layoutResult = window.pretext.layout(data.prepared, rect.width, parseFloat(window.getComputedStyle(data.element).lineHeight) || 20);
+            
+            data.bounds = {
+              left: rect.left + window.scrollX,
+              top: rect.top + window.scrollY,
+              right: rect.right + window.scrollX,
+              bottom: rect.bottom + window.scrollY,
+              width: rect.width,
+              height: layoutResult.height || rect.height,
+              centerX: rect.left + rect.width / 2,
+              centerY: rect.top + rect.height / 2,
+              lineCount: layoutResult.lineCount || 1
+            };
+          } else {
+            // 降级方案：直接使用元素边界
+            data.bounds = {
+              left: rect.left + window.scrollX,
+              top: rect.top + window.scrollY,
+              right: rect.right + window.scrollX,
+              bottom: rect.bottom + window.scrollY,
+              width: rect.width,
+              height: rect.height,
+              centerX: rect.left + rect.width / 2,
+              centerY: rect.top + rect.height / 2,
+              lineCount: 1
+            };
+          }
+        } catch (e) {
+          console.warn('Pretext layout failed:', e);
+        }
       }
     });
   }
@@ -144,20 +185,27 @@ class TextInteractionAnimation {
     let totalForceY = 0;
     let influenceCount = 0;
 
-    this.textPositions.forEach((positions) => {
-      positions.forEach(pos => {
-        const dx = pos.x - this.mouseX;
-        const dy = pos.y - this.mouseY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+    this.preparedTexts.forEach((data) => {
+      if (!data.bounds) return;
 
-        if (distance < this.radius && distance > 0) {
-          // 计算排斥力（文字推开动画）
-          const force = (1 - distance / this.radius) * (this.intensity / 50);
-          totalForceX += (dx / distance) * force * 30;
-          totalForceY += (dy / distance) * force * 30;
-          influenceCount++;
-        }
-      });
+      const bounds = data.bounds;
+      
+      // 计算鼠标到文本区域中心的距离
+      const dx = bounds.centerX - this.mouseX;
+      const dy = bounds.centerY - this.mouseY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < this.radius && distance > 0) {
+        // 计算排斥力
+        const force = (1 - distance / this.radius) * (this.intensity / 50);
+        
+        // 根据文本的行数调整力度（更多文字 = 更强的力）
+        const textFactor = Math.min(data.bounds.lineCount / 3, 1.5);
+        
+        totalForceX += (dx / distance) * force * 30 * textFactor;
+        totalForceY += (dy / distance) * force * 30 * textFactor;
+        influenceCount++;
+      }
     });
 
     return {
@@ -249,27 +297,37 @@ class TextInteractionAnimation {
   }
 }
 
-// 初始化动画
-const animation = new TextInteractionAnimation();
-
-// 监听来自 popup 的消息
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  switch (message.type) {
-    case 'toggleAnimation':
-      animation.toggle(message.enabled);
-      break;
-    case 'updateImage':
-      animation.updateImage(message.imageData);
-      break;
-    case 'updateSize':
-      animation.updateSize(message.size);
-      break;
-    case 'updateIntensity':
-      animation.updateIntensity(message.intensity);
-      break;
-    case 'updateRadius':
-      animation.updateRadius(message.radius);
-      break;
+// 等待 pretext 加载完成后初始化
+function initAnimation() {
+  if (typeof window.pretext !== 'undefined') {
+    const animation = new TextInteractionAnimation();
+    
+    // 监听来自 popup 的消息
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      switch (message.type) {
+        case 'toggleAnimation':
+          animation.toggle(message.enabled);
+          break;
+        case 'updateImage':
+          animation.updateImage(message.imageData);
+          break;
+        case 'updateSize':
+          animation.updateSize(message.size);
+          break;
+        case 'updateIntensity':
+          animation.updateIntensity(message.intensity);
+          break;
+        case 'updateRadius':
+          animation.updateRadius(message.radius);
+          break;
+      }
+      sendResponse({ success: true });
+    });
+  } else {
+    // 等待 pretext 加载
+    setTimeout(initAnimation, 100);
   }
-  sendResponse({ success: true });
-});
+}
+
+// 延迟初始化，等待 pretext-loader.js 完成
+setTimeout(initAnimation, 500);
