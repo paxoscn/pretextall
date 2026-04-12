@@ -27,6 +27,13 @@ class TextInteractionAnimation {
     this.intensity = settings.intensity || 50;
     this.radius = settings.radius || 100;
 
+    console.log('Text Interaction Animation initialized:', {
+      enabled: this.enabled,
+      size: this.size,
+      intensity: this.intensity,
+      radius: this.radius
+    });
+
     if (this.enabled) {
       this.createAnimationElement();
       this.scanAndPrepareText();
@@ -37,7 +44,7 @@ class TextInteractionAnimation {
     document.addEventListener('mousemove', (e) => {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
-    });
+    }, { passive: true });
 
     // 监听页面变化，重新扫描文字
     const observer = new MutationObserver(() => {
@@ -66,11 +73,12 @@ class TextInteractionAnimation {
     this.animationElement.id = 'text-interaction-animation';
     this.animationElement.style.cssText = `
       position: fixed;
+      left: 0;
+      top: 0;
       width: ${this.size}px;
       height: ${this.size}px;
       pointer-events: none;
       z-index: 999999;
-      transition: transform 0.1s ease-out;
       will-change: transform;
     `;
 
@@ -218,18 +226,24 @@ class TextInteractionAnimation {
   animate() {
     if (!this.enabled || !this.animationElement) return;
 
+    // 确保有鼠标位置（初始化时可能为 0）
+    if (this.mouseX === 0 && this.mouseY === 0) {
+      this.animationFrame = requestAnimationFrame(() => this.animate());
+      return;
+    }
+
     const influence = this.calculateTextInfluence();
     
     // 动画跟随鼠标，但受文字影响而偏移
-    const targetX = this.mouseX + influence.x;
-    const targetY = this.mouseY + influence.y;
+    const targetX = this.mouseX + influence.x - this.size / 2;
+    const targetY = this.mouseY + influence.y - this.size / 2;
 
     // 添加轻微的弹性效果
     const scale = influence.hasInfluence ? 1.2 : 1;
     const rotation = influence.x * 0.5;
 
     this.animationElement.style.transform = `
-      translate(${targetX - this.size / 2}px, ${targetY - this.size / 2}px)
+      translate(${targetX}px, ${targetY}px)
       scale(${scale})
       rotate(${rotation}deg)
     `;
@@ -241,6 +255,7 @@ class TextInteractionAnimation {
     if (this.animationFrame) {
       cancelAnimationFrame(this.animationFrame);
     }
+    console.log('Starting animation...');
     this.animate();
   }
 

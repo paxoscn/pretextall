@@ -1,16 +1,6 @@
 /* 文字互动动画样式 */
 
 #text-interaction-animation {
-  /* 基础样式在 JS 中设置 */
-}
-
-/* 为动画添加平滑过渡 */
-#text-interaction-animation {
-  transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* 确保动画不会干扰页面交互 */
-#text-interaction-animation {
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;

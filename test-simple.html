@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简单测试页面</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 50px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+    }
+    p {
+      margin: 20px 0;
+      font-size: 18px;
+    }
+    .box {
+      background: #f0f0f0;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>测试页面</h1>
+  
+  <p>这是一段测试文字。移动鼠标到这里，看看动画是否会被推开。</p>
+  
+  <div class="box">
+    <h2>文字区域</h2>
+    <p>这里有更多的文字内容。动画应该会被这些文字影响。</p>
+    <p>尝试在不同的文字区域移动鼠标。</p>
+  </div>
+  
+  <p>下面是一些密集的文字：</p>
+  <p>
+    文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+    文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+    文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  </p>
+  
+  <script>
+    // 显示鼠标位置用于调试
+    document.addEventListener('mousemove', (e) => {
+      console.log('Mouse position:', e.clientX, e.clientY);
+    });
+  </script>
+</body>
+</html>
