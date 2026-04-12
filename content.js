@@ -13,6 +13,8 @@ class TextInteractionAnimation {
     this.animationElement = null;
     this.textElements = [];
     this.animationFrame = null;
+    this.canvas = null; // 用于测量文字宽度
+    this.ctx = null;
     
     this.init();
   }
@@ -24,6 +26,10 @@ class TextInteractionAnimation {
     this.size = settings.size || 50;
     this.intensity = settings.intensity || 50;
     this.radius = settings.radius || 100;
+
+    // 创建 Canvas 用于测量文字宽度
+    this.canvas = document.createElement('canvas');
+    this.ctx = this.canvas.getContext('2d');
 
     console.log('Text Interaction Animation initialized');
 
@@ -84,7 +90,7 @@ class TextInteractionAnimation {
 
   scanTextElements() {
     this.textElements = [];
-    const elements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, blockquote, li');
+    const elements = document.querySelectorAll('div.heading-block, div.text-block, div.code-line-wrapper, p, h1, h2, h3, h4, h5, h6, blockquote, li');
     
     elements.forEach((element) => {
       const text = element.textContent.trim();
@@ -185,7 +191,7 @@ class TextInteractionAnimation {
   relayoutTextAroundImage(data, elementTop, elementLeft, maxWidth) {
     if (!window.pretext.layoutNextLineRange || !window.pretext.materializeLineRange) return;
 
-    const { element, prepared, lineHeight, fontSize } = data;
+    const { element, prepared, lineHeight, fontSize, font } = data;
     const lines = [];
     let cursor = { segmentIndex: 0, graphemeIndex: 0 };
     let y = 0;
@@ -193,6 +199,9 @@ class TextInteractionAnimation {
     while (true) {
       const lineY = elementTop + y;
       const layoutInfo = this.calculateLineLayout(lineY, lineHeight, elementLeft, maxWidth);
+      
+      // 传递字体信息
+      layoutInfo.font = font;
 
       if (layoutInfo.skip) {
         lines.push('');
@@ -220,8 +229,9 @@ class TextInteractionAnimation {
       
       let lineText = line.text;
       if (layoutInfo.indent > 0) {
-        const spaceWidth = fontSize * 0.5;
-        const spaces = Math.floor(layoutInfo.indent / spaceWidth);
+        this.ctx.font = font;
+        const spaceWidth = this.ctx.measureText(' ').width;
+        const spaces = Math.ceil(layoutInfo.indent / spaceWidth);
         lineText = ' '.repeat(Math.max(0, spaces)) + lineText;
       }
       
@@ -268,13 +278,26 @@ class TextInteractionAnimation {
 
     const rightLine = window.pretext.materializeLineRange(prepared, rightRange);
     
-    // 计算图片占据的空间（用空格填充）
-    const imageSpaceWidth = layoutInfo.imageWidth + layoutInfo.gap * 2;
-    const spaceWidth = fontSize * 0.5;
-    const spaces = Math.floor(imageSpaceWidth / spaceWidth);
+    // 使用 Canvas 精确测量空格宽度
+    const font = layoutInfo.font || `${fontSize}px Arial`;
+    this.ctx.font = font;
+    const spaceWidth = this.ctx.measureText(' ').width;
+    
+    // 计算需要填充的宽度
+    // 从左侧文字结束位置到右侧文字开始位置的距离
+    const leftTextWidth = leftLine.width || layoutInfo.leftWidth;
+    
+    // 图片占据的总空间（包括两侧间距）
+    const totalImageSpace = layoutInfo.imageWidth + layoutInfo.gap * 2;
+    
+    // 需要的空格宽度 = 图片空间 + (左侧可用宽度 - 左侧实际文字宽度)
+    const gapWidth = totalImageSpace + (layoutInfo.leftWidth - leftTextWidth);
+    
+    // 计算需要的空格数量
+    const spaces = Math.max(1, Math.ceil(gapWidth / spaceWidth));
     
     // 组合左右两侧文字
-    const combinedText = leftLine.text + ' '.repeat(Math.max(0, spaces)) + rightLine.text;
+    const combinedText = leftLine.text + ' '.repeat(spaces) + rightLine.text;
     
     return { text: combinedText, cursor: rightRange.end };
   }
@@ -307,7 +330,8 @@ class TextInteractionAnimation {
             leftWidth: leftSpace,
             rightWidth: rightSpace,
             imageWidth: this.size,
-            gap: gap
+            gap: gap,
+            font: null // 将在调用时设置
           };
         }
         // 只有左侧空间足够
