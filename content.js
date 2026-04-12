@@ -1,4 +1,4 @@
-// 文字互动动画 - 使用 pretext 实现文字避开图片效果
+// 文字互动动画 - 使用 pretext 实现文字环绕图片效果
 // 基于 https://github.com/chenglou/pretext
 
 class TextInteractionAnimation {
@@ -18,7 +18,6 @@ class TextInteractionAnimation {
   }
 
   async init() {
-    // 加载设置
     const settings = await chrome.storage.sync.get(['enabled', 'imageData', 'size', 'intensity', 'radius']);
     this.enabled = settings.enabled !== false;
     this.imageData = settings.imageData;
@@ -26,12 +25,7 @@ class TextInteractionAnimation {
     this.intensity = settings.intensity || 50;
     this.radius = settings.radius || 100;
 
-    console.log('Text Interaction Animation initialized:', {
-      enabled: this.enabled,
-      size: this.size,
-      intensity: this.intensity,
-      radius: this.radius
-    });
+    console.log('Text Interaction Animation initialized');
 
     if (this.enabled) {
       this.createAnimationElement();
@@ -39,41 +33,27 @@ class TextInteractionAnimation {
       this.startAnimation();
     }
 
-    // 监听鼠标移动
     document.addEventListener('mousemove', (e) => {
       this.mouseX = e.clientX + window.scrollX;
       this.mouseY = e.clientY + window.scrollY;
     }, { passive: true });
 
-    // 监听页面变化
     const observer = new MutationObserver(() => {
-      if (this.enabled) {
-        this.scanTextElements();
-      }
+      if (this.enabled) this.scanTextElements();
     });
-    observer.observe(document.body, { 
-      childList: true, 
-      subtree: true 
-    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
-    // 监听滚动和窗口大小变化
     window.addEventListener('scroll', () => {
-      if (this.enabled) {
-        this.relayoutAllText();
-      }
+      if (this.enabled) this.relayoutAllText();
     }, { passive: true });
     
     window.addEventListener('resize', () => {
-      if (this.enabled) {
-        this.scanTextElements();
-      }
+      if (this.enabled) this.scanTextElements();
     });
   }
 
   createAnimationElement() {
-    if (this.animationElement) {
-      this.animationElement.remove();
-    }
+    if (this.animationElement) this.animationElement.remove();
 
     this.animationElement = document.createElement('div');
     this.animationElement.id = 'text-interaction-animation';
@@ -94,7 +74,6 @@ class TextInteractionAnimation {
       this.animationElement.style.backgroundRepeat = 'no-repeat';
       this.animationElement.style.backgroundPosition = 'center';
     } else {
-      // 默认动画：彩色圆圈
       this.animationElement.style.background = 'radial-gradient(circle, rgba(255,100,150,0.8), rgba(100,150,255,0.8))';
       this.animationElement.style.borderRadius = '50%';
       this.animationElement.style.boxShadow = '0 0 20px rgba(255,100,150,0.6)';
@@ -105,15 +84,12 @@ class TextInteractionAnimation {
 
   scanTextElements() {
     this.textElements = [];
-
-    // 只选择段落元素，避免处理太多小元素
     const elements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, blockquote, li');
     
     elements.forEach((element) => {
       const text = element.textContent.trim();
       if (text.length === 0) return;
 
-      // 获取元素的计算样式
       const style = window.getComputedStyle(element);
       const fontSize = style.fontSize;
       const fontFamily = style.fontFamily;
@@ -121,15 +97,12 @@ class TextInteractionAnimation {
       const fontStyle = style.fontStyle;
       const lineHeight = parseFloat(style.lineHeight) || parseFloat(fontSize) * 1.2;
       
-      // 构建 font 字符串
       const font = `${fontStyle !== 'normal' ? fontStyle + ' ' : ''}${fontWeight !== '400' ? fontWeight + ' ' : ''}${fontSize} ${fontFamily}`;
 
       try {
-        // 使用 pretext 准备文本
         if (typeof window.pretext !== 'undefined' && window.pretext.prepareWithSegments) {
           const prepared = window.pretext.prepareWithSegments(text, font);
           
-          // 保存原始文本和样式
           if (!element.dataset.originalText) {
             element.dataset.originalText = text;
           }
@@ -139,6 +112,7 @@ class TextInteractionAnimation {
             prepared,
             font,
             lineHeight,
+            fontSize: parseFloat(fontSize),
             originalText: text
           });
         }
@@ -164,23 +138,26 @@ class TextInteractionAnimation {
       const elementLeft = rect.left + window.scrollX;
       const maxWidth = rect.width;
 
-      // 检查图片是否在这个元素的范围内
       const imageInElement = this.isImageInElement(elementTop, elementLeft, rect.height, maxWidth);
 
       if (imageInElement) {
-        // 使用 pretext 重新布局文字，让文字避开图片
         this.relayoutTextAroundImage(data, elementTop, elementLeft, maxWidth);
       } else {
-        // 恢复原始文本
         if (element.textContent !== data.originalText) {
           element.textContent = data.originalText;
+          
+          if (element.dataset.originalWhiteSpace) {
+            element.style.whiteSpace = element.dataset.originalWhiteSpace;
+            delete element.dataset.originalWhiteSpace;
+          } else {
+            element.style.whiteSpace = '';
+          }
         }
       }
     });
   }
 
   isImageInElement(elementTop, elementLeft, elementHeight, elementWidth) {
-    // 检查图片（鼠标位置）是否在元素范围内
     const imageX = this.mouseX;
     const imageY = this.mouseY;
     
@@ -193,96 +170,189 @@ class TextInteractionAnimation {
   relayoutTextAroundImage(data, elementTop, elementLeft, maxWidth) {
     if (!window.pretext.layoutNextLineRange || !window.pretext.materializeLineRange) return;
 
-    const { element, prepared, lineHeight } = data;
+    const { element, prepared, lineHeight, fontSize } = data;
     const lines = [];
     let cursor = { segmentIndex: 0, graphemeIndex: 0 };
     let y = 0;
 
-    // 逐行布局文字
     while (true) {
-      // 计算当前行的可用宽度（考虑图片位置）
       const lineY = elementTop + y;
-      const availableWidth = this.calculateAvailableWidth(
-        lineY, 
-        lineHeight, 
-        elementLeft, 
-        maxWidth
-      );
+      const layoutInfo = this.calculateLineLayout(lineY, lineHeight, elementLeft, maxWidth);
 
-      // 使用 pretext 布局这一行
-      const lineRange = window.pretext.layoutNextLineRange(prepared, cursor, availableWidth);
+      if (layoutInfo.skip) {
+        lines.push('');
+        y += lineHeight;
+        continue;
+      }
+
+      // 如果左右两侧都有空间，尝试拆分文字
+      if (layoutInfo.leftWidth > 0 && layoutInfo.rightWidth > 0) {
+        const splitLine = this.layoutSplitLine(prepared, cursor, layoutInfo, fontSize);
+        if (splitLine) {
+          lines.push(splitLine.text);
+          cursor = splitLine.cursor;
+          y += lineHeight;
+          continue;
+        }
+      }
+
+      // 否则使用单侧布局
+      const lineRange = window.pretext.layoutNextLineRange(prepared, cursor, layoutInfo.width);
       
       if (lineRange === null) break;
 
       const line = window.pretext.materializeLineRange(prepared, lineRange);
-      lines.push(line.text);
       
+      let lineText = line.text;
+      if (layoutInfo.indent > 0) {
+        const spaceWidth = fontSize * 0.5;
+        const spaces = Math.floor(layoutInfo.indent / spaceWidth);
+        lineText = ' '.repeat(Math.max(0, spaces)) + lineText;
+      }
+      
+      lines.push(lineText);
       cursor = lineRange.end;
       y += lineHeight;
     }
 
-    // 更新元素文本
     const newText = lines.join('\n');
     if (element.textContent !== newText) {
+      if (!element.dataset.originalWhiteSpace) {
+        const computedStyle = window.getComputedStyle(element);
+        element.dataset.originalWhiteSpace = computedStyle.whiteSpace;
+      }
+      
       element.textContent = newText;
       element.style.whiteSpace = 'pre-wrap';
     }
   }
 
-  calculateAvailableWidth(lineY, lineHeight, elementLeft, maxWidth) {
-    // 检查图片是否与当前行重叠
+  layoutSplitLine(prepared, cursor, layoutInfo, fontSize) {
+    if (!window.pretext.layoutNextLineRange || !window.pretext.materializeLineRange) return null;
+
+    const minWidth = 30;
+    if (layoutInfo.leftWidth < minWidth || layoutInfo.rightWidth < minWidth) {
+      return null;
+    }
+
+    // 布局左侧文字
+    const leftRange = window.pretext.layoutNextLineRange(prepared, cursor, layoutInfo.leftWidth);
+    if (!leftRange) return null;
+
+    const leftLine = window.pretext.materializeLineRange(prepared, leftRange);
+    
+    // 布局右侧文字
+    const rightRange = window.pretext.layoutNextLineRange(prepared, leftRange.end, layoutInfo.rightWidth);
+    if (!rightRange) {
+      // 如果右侧没有更多文字，只返回左侧
+      return { text: leftLine.text, cursor: leftRange.end };
+    }
+
+    const rightLine = window.pretext.materializeLineRange(prepared, rightRange);
+    
+    // 计算图片占据的空间（用空格填充）
+    const imageSpaceWidth = layoutInfo.imageWidth + layoutInfo.gap * 2;
+    const spaceWidth = fontSize * 0.5;
+    const spaces = Math.floor(imageSpaceWidth / spaceWidth);
+    
+    // 组合左右两侧文字
+    const combinedText = leftLine.text + ' '.repeat(Math.max(0, spaces)) + rightLine.text;
+    
+    return { text: combinedText, cursor: rightRange.end };
+  }
+
+  calculateLineLayout(lineY, lineHeight, elementLeft, maxWidth) {
     const imageTop = this.mouseY - this.size / 2;
     const imageBottom = this.mouseY + this.size / 2;
     const imageLeft = this.mouseX - this.size / 2;
     const imageRight = this.mouseX + this.size / 2;
 
     const lineBottom = lineY + lineHeight;
+    const gap = 10;
 
-    // 如果图片与当前行重叠
     if (imageBottom >= lineY && imageTop <= lineBottom) {
       const imageRelativeLeft = imageLeft - elementLeft;
       const imageRelativeRight = imageRight - elementLeft;
 
-      // 图片在左侧
-      if (imageRelativeLeft < maxWidth / 2) {
-        const cutoff = Math.max(0, imageRelativeRight + 10); // 10px 间距
-        return maxWidth - cutoff;
-      }
-      // 图片在右侧
-      else {
-        const cutoff = Math.max(0, imageRelativeLeft - 10);
-        return cutoff;
+      if (imageRelativeRight > 0 && imageRelativeLeft < maxWidth) {
+        const leftSpace = Math.max(0, imageRelativeLeft - gap);
+        const rightSpace = Math.max(0, maxWidth - imageRelativeRight - gap);
+        
+        const minWidth = 30;
+        
+        // 如果左右两侧都有足够空间，返回两侧信息
+        if (leftSpace > minWidth && rightSpace > minWidth) {
+          return {
+            width: leftSpace,
+            indent: 0,
+            skip: false,
+            leftWidth: leftSpace,
+            rightWidth: rightSpace,
+            imageWidth: this.size,
+            gap: gap
+          };
+        }
+        // 只有左侧空间足够
+        else if (leftSpace > minWidth) {
+          return { 
+            width: leftSpace, 
+            indent: 0, 
+            skip: false,
+            leftWidth: leftSpace,
+            rightWidth: 0
+          };
+        }
+        // 只有右侧空间足够
+        else if (rightSpace > minWidth) {
+          return { 
+            width: rightSpace, 
+            indent: imageRelativeRight + gap, 
+            skip: false,
+            leftWidth: 0,
+            rightWidth: rightSpace
+          };
+        }
+        // 两侧空间都不够
+        else {
+          return { 
+            width: 0, 
+            indent: 0, 
+            skip: true,
+            leftWidth: 0,
+            rightWidth: 0
+          };
+        }
       }
     }
 
-    return maxWidth;
+    return { 
+      width: maxWidth, 
+      indent: 0, 
+      skip: false,
+      leftWidth: 0,
+      rightWidth: 0
+    };
   }
 
   animate() {
     if (!this.enabled || !this.animationElement) return;
 
-    // 确保有鼠标位置
     if (this.mouseX === 0 && this.mouseY === 0) {
       this.animationFrame = requestAnimationFrame(() => this.animate());
       return;
     }
 
-    // 更新动画位置（跟随鼠标）
     const targetX = this.mouseX - this.size / 2 - window.scrollX;
     const targetY = this.mouseY - this.size / 2 - window.scrollY;
 
     this.animationElement.style.transform = `translate(${targetX}px, ${targetY}px)`;
-
-    // 重新布局文字
     this.relayoutAllText();
 
     this.animationFrame = requestAnimationFrame(() => this.animate());
   }
 
   startAnimation() {
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame);
-    }
+    if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
     console.log('Starting animation...');
     this.animate();
   }
@@ -295,11 +365,17 @@ class TextInteractionAnimation {
     if (this.animationElement) {
       this.animationElement.style.display = 'none';
     }
-    // 恢复所有文本
     this.textElements.forEach((data) => {
-      if (data.element.textContent !== data.originalText) {
-        data.element.textContent = data.originalText;
-        data.element.style.whiteSpace = '';
+      const element = data.element;
+      if (element.textContent !== data.originalText) {
+        element.textContent = data.originalText;
+        
+        if (element.dataset.originalWhiteSpace) {
+          element.style.whiteSpace = element.dataset.originalWhiteSpace;
+          delete element.dataset.originalWhiteSpace;
+        } else {
+          element.style.whiteSpace = '';
+        }
       }
     });
   }
@@ -307,9 +383,7 @@ class TextInteractionAnimation {
   toggle(enabled) {
     this.enabled = enabled;
     if (enabled) {
-      if (!this.animationElement) {
-        this.createAnimationElement();
-      }
+      if (!this.animationElement) this.createAnimationElement();
       this.animationElement.style.display = 'block';
       this.startAnimation();
     } else {
@@ -347,13 +421,11 @@ class TextInteractionAnimation {
   }
 }
 
-// 等待 pretext 加载完成后初始化
 function initAnimation() {
   if (typeof window.pretext !== 'undefined') {
     const animation = new TextInteractionAnimation();
     
-    // 监听来自 popup 的消息
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       switch (message.type) {
         case 'toggleAnimation':
           animation.toggle(message.enabled);
@@ -374,10 +446,8 @@ function initAnimation() {
       sendResponse({ success: true });
     });
   } else {
-    // 等待 pretext 加载
     setTimeout(initAnimation, 100);
   }
 }
 
-// 延迟初始化，等待 pretext-loader.js 完成
 setTimeout(initAnimation, 500);

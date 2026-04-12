@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>样式保留测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 50px;
+      line-height: 1.8;
+      max-width: 900px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    
+    h1 {
+      color: #2196F3;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .section {
+      background: white;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .section h2 {
+      color: #FF5722;
+      margin-top: 0;
+      border-bottom: 2px solid #FF5722;
+      padding-bottom: 10px;
+    }
+    
+    /* 不同样式的段落 */
+    .colored-text {
+      color: #9C27B0;
+      font-size: 18px;
+    }
+    
+    .background-text {
+      background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+      padding: 20px;
+      border-radius: 8px;
+      color: #333;
+    }
+    
+    .styled-text {
+      font-family: Georgia, serif;
+      font-size: 20px;
+      color: #E91E63;
+      font-style: italic;
+      line-height: 2;
+    }
+    
+    .bordered-text {
+      border: 3px solid #4CAF50;
+      border-radius: 8px;
+      padding: 20px;
+      background: #E8F5E9;
+      color: #2E7D32;
+    }
+    
+    .gradient-text {
+      background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 22px;
+      font-weight: bold;
+    }
+    
+    .shadow-text {
+      color: #FF9800;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      font-size: 19px;
+    }
+    
+    .monospace-text {
+      font-family: 'Courier New', monospace;
+      background: #263238;
+      color: #00FF00;
+      padding: 20px;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    
+    .instructions {
+      background: #FFF9C4;
+      border-left: 5px solid #FBC02D;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 5px;
+    }
+    
+    .instructions h3 {
+      margin-top: 0;
+      color: #F57F17;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 样式保留测试页面</h1>
+  
+  <div class="instructions">
+    <h3>测试说明</h3>
+    <p><strong>目的：</strong>验证文字避开图片时，所有原有样式（颜色、背景、字体、边框等）都被保留。</p>
+    <p><strong>操作：</strong>移动鼠标到下面各个彩色段落上，观察文字重排时样式是否保持不变。</p>
+  </div>
+
+  <div class="section">
+    <h2>1. 紫色文字</h2>
+    <p class="colored-text">
+      这段文字是紫色的。当你移动鼠标到这里时，文字会重新排列以避开图片，
+      但是紫色应该保持不变。pretext 只改变文字的布局，不会影响任何 CSS 样式。
+      试着在不同位置移动鼠标，看看紫色是否一直保持。这个测试很重要，
+      因为它验证了我们的实现不会破坏原有的视觉设计。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>2. 渐变背景文字</h2>
+    <p class="background-text">
+      这段文字有漂亮的渐变背景。当文字重新排列时，背景渐变应该保持不变。
+      移动鼠标到这里，观察背景色是否依然是从绿色到蓝色的渐变。
+      这个测试验证了背景样式的保留。文字的布局改变了，但是背景依然美丽。
+      这就是 pretext 的强大之处 - 它只关注文字的位置，不会干扰其他样式。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>3. 斜体衬线字体</h2>
+    <p class="styled-text">
+      这段文字使用 Georgia 衬线字体，并且是斜体的粉红色。
+      当鼠标移动到这里时，字体、颜色、斜体样式都应该保持不变。
+      只有文字的排列方式会改变，以避开图片。这展示了 pretext 
+      如何与各种字体样式完美配合。无论是衬线字体还是无衬线字体，
+      无论是正体还是斜体，都能正确处理。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>4. 带边框和背景的文字</h2>
+    <p class="bordered-text">
+      这段文字有绿色边框和浅绿色背景。当文字重新排列时，
+      边框和背景色都应该保持不变。移动鼠标测试一下。
+      这个测试验证了盒模型相关的样式（border、padding、background）
+      在文字重排时不会受到影响。这对于保持页面的整体设计非常重要。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>5. 渐变文字（需要支持的浏览器）</h2>
+    <p class="gradient-text">
+      这段文字本身就是渐变色的（使用 background-clip）。
+      当文字避开图片时，渐变效果应该保持。这是一个高级的 CSS 技巧，
+      测试我们的实现是否能处理这种复杂的样式。移动鼠标看看效果。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>6. 带阴影的文字</h2>
+    <p class="shadow-text">
+      这段橙色文字有阴影效果。当文字重新排列时，阴影应该跟随文字一起移动。
+      text-shadow 是一个常用的样式，我们需要确保它在文字重排后依然有效。
+      移动鼠标到这里，观察阴影是否保持在文字下方。这个测试验证了
+      文字装饰效果的保留。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>7. 等宽字体（代码风格）</h2>
+    <p class="monospace-text">
+      这段文字使用等宽字体，模拟代码编辑器的样式。
+      背景是深色的，文字是绿色的，就像终端一样。
+      当文字避开图片时，这种代码风格应该完全保留。
+      这对于技术文档和代码展示页面很重要。
+      移动鼠标测试一下，看看是否保持了黑客风格。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>8. 普通段落（对照组）</h2>
+    <p>
+      这是一个普通的段落，没有特殊样式。它使用默认的黑色文字和白色背景。
+      这个段落作为对照组，让你可以比较有样式和无样式的文字在避开图片时的表现。
+      移动鼠标到这里，观察文字如何重新排列。然后对比上面那些有样式的段落，
+      看看它们的样式是否都被正确保留了。
+    </p>
+  </div>
+
+  <div class="instructions">
+    <h3>✅ 检查清单</h3>
+    <p>移动鼠标到每个段落上，确认：</p>
+    <ul>
+      <li>✓ 文字颜色保持不变</li>
+      <li>✓ 背景颜色/渐变保持不变</li>
+      <li>✓ 字体样式（字体族、大小、粗细、斜体）保持不变</li>
+      <li>✓ 边框和内边距保持不变</li>
+      <li>✓ 文字阴影保持不变</li>
+      <li>✓ 其他所有 CSS 样式保持不变</li>
+      <li>✓ 只有文字的排列方式改变了</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>调试信息</h2>
+    <p style="font-size: 14px; color: #666;">
+      打开浏览器控制台（F12）查看：<br>
+      - 插件是否正确初始化<br>
+      - 是否扫描到了所有段落<br>
+      - 是否有任何错误信息
+    </p>
+  </div>
+</body>
+</html>

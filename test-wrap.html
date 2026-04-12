@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字环绕图片测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 50px;
+      line-height: 1.8;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    
+    h1 {
+      color: #2196F3;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .section {
+      background: white;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .section h2 {
+      color: #FF5722;
+      margin-top: 0;
+    }
+    
+    p {
+      font-size: 18px;
+      text-align: justify;
+      margin: 15px 0;
+    }
+    
+    .instructions {
+      background: #FFF9C4;
+      border-left: 5px solid #FBC02D;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 5px;
+    }
+    
+    .instructions h3 {
+      margin-top: 0;
+      color: #F57F17;
+    }
+    
+    .highlight {
+      background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+      padding: 20px;
+      border-radius: 8px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 文字环绕图片效果测试</h1>
+  
+  <div class="instructions">
+    <h3>✨ 新功能：真正的文字环绕</h3>
+    <p><strong>现在文字会在图片的左右两侧同时显示！</strong></p>
+    <p>移动鼠标到下面的段落中间位置，观察文字如何在图片左右两侧环绕。</p>
+    <p><strong>提示：</strong>慢慢移动鼠标，看文字如何动态调整布局。</p>
+  </div>
+
+  <div class="section">
+    <h2>测试段落 1 - 长文本</h2>
+    <p>
+      这是一段很长的测试文字，专门用来演示文字环绕图片的效果。当你移动鼠标到这段文字的中间位置时，
+      文字会被拆分成左右两部分，分别显示在图片的两侧。这就像传统的杂志排版一样，文字优雅地环绕着图片。
+      pretext 库的强大之处在于，它可以精确计算每一行文字的宽度，然后根据图片的位置动态调整布局。
+      试着慢慢移动鼠标，观察文字如何实时重新排列。你会发现，无论图片在哪个位置，文字都能完美地环绕它。
+      这种效果在传统的 CSS 中很难实现，但是通过 pretext 的文本布局能力，我们可以轻松做到。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>测试段落 2 - 中文环绕</h2>
+    <p>
+      在这个段落中，我们使用中文来测试环绕效果。中文的排版和英文有所不同，每个汉字都是等宽的。
+      当鼠标移动到这段文字的中间时，你应该能看到汉字如何被拆分成左右两部分。左侧的文字会在图片左边显示，
+      右侧的文字会在图片右边显示，中间留出图片的空间。这种环绕效果对于创建更加动态和有趣的网页非常有用。
+      试着在不同的位置移动鼠标，看看文字如何适应不同的布局。你会发现，无论图片在段落的哪个位置，
+      文字都能智能地环绕它，就像水流绕过石头一样自然。
+    </p>
+  </div>
+
+  <div class="section highlight">
+    <h2>测试段落 3 - 带背景的文字</h2>
+    <p>
+      这个段落有漂亮的渐变背景。当文字环绕图片时，背景色应该保持不变。
+      移动鼠标到这里，观察文字如何在图片左右两侧显示，同时保持背景渐变效果。
+      这个测试验证了我们的实现不仅能正确处理文字布局，还能保留所有原有的样式。
+      文字的颜色、背景、字体等所有属性都会被完整保留，只有布局会改变。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>测试段落 4 - 混合语言</h2>
+    <p>
+      This paragraph contains both English and 中文内容，用来测试混合语言的环绕效果。
+      When you move the mouse to the middle of this text, 文字应该会被拆分成左右两部分。
+      The pretext library handles mixed-language content 很好地，ensuring that 每种语言的排版规则
+      are respected. Try moving the mouse slowly across this paragraph to see how the text wraps
+      around the image. 这个效果在处理多语言内容时特别有用，因为它可以正确处理不同语言的断行规则。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>测试段落 5 - 超长文本</h2>
+    <p>
+      这是一个超长的段落，包含了大量的文字内容，用来测试在文字很多的情况下环绕效果是否依然流畅。
+      当图片移动到这段文字的不同位置时，每一行都会根据图片的位置重新计算布局。
+      如果图片在某一行的中间，那么这一行的文字就会被拆分成左右两部分。
+      如果图片在某一行的左侧或右侧，那么文字就会在另一侧显示。
+      这种智能的布局算法确保了文字总是能够最大化地利用可用空间。
+      你可以尝试快速移动鼠标，看看文字是否能够跟上。
+      在大多数情况下，你应该能看到流畅的动画效果，文字像液体一样在图片周围流动。
+      这种效果不仅美观，而且非常实用，可以用于创建更加动态和互动的网页体验。
+      想象一下，在一个新闻网站或博客上，图片可以根据用户的鼠标位置动态调整，
+      文字会自动环绕图片，创造出独特的阅读体验。
+    </p>
+  </div>
+
+  <div class="instructions">
+    <h3>🔍 观察要点</h3>
+    <ul>
+      <li>✓ 当鼠标在段落中间时，文字应该在图片左右两侧同时显示</li>
+      <li>✓ 左侧文字和右侧文字之间有适当的间距（图片占据的空间）</li>
+      <li>✓ 文字的所有样式（颜色、背景、字体等）都保持不变</li>
+      <li>✓ 当鼠标移开时，文字恢复原始布局</li>
+      <li>✓ 环绕效果流畅，没有明显的卡顿</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>技术说明</h2>
+    <p style="font-size: 16px; color: #666;">
+      <strong>实现原理：</strong><br>
+      1. 使用 pretext 的 layoutNextLineRange() 计算左侧文字<br>
+      2. 继续使用 layoutNextLineRange() 计算右侧文字<br>
+      3. 用空格填充图片占据的空间<br>
+      4. 组合左侧文字 + 空格 + 右侧文字<br>
+      5. 实时更新 DOM 显示新的布局
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>调试信息</h2>
+    <p style="font-size: 14px; color: #666;">
+      打开浏览器控制台（F12）查看：<br>
+      - "Text Interaction Animation initialized" - 插件已初始化<br>
+      - "Scanned X text elements" - 扫描到的文本元素数量<br>
+      - "Starting animation..." - 动画已启动
+    </p>
+  </div>
+</body>
+</html>
