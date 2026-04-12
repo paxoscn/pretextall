@@ -136,35 +136,50 @@ class TextInteractionAnimation {
 
       const elementTop = rect.top + window.scrollY;
       const elementLeft = rect.left + window.scrollX;
+      const elementRight = elementLeft + rect.width;
+      const elementBottom = elementTop + rect.height;
       const maxWidth = rect.width;
 
-      const imageInElement = this.isImageInElement(elementTop, elementLeft, rect.height, maxWidth);
+      // 检查图片是否在这个元素的范围内（添加一些容差）
+      const imageInElement = this.isImageInElement(elementTop, elementLeft, elementBottom, elementRight);
 
       if (imageInElement) {
+        // 使用 pretext 重新布局文字，让文字环绕图片
         this.relayoutTextAroundImage(data, elementTop, elementLeft, maxWidth);
       } else {
-        if (element.textContent !== data.originalText) {
+        // 恢复原始文本和样式
+        if (element.dataset.modified === 'true' || element.textContent !== data.originalText) {
           element.textContent = data.originalText;
           
+          // 恢复原有的 white-space 样式
           if (element.dataset.originalWhiteSpace) {
             element.style.whiteSpace = element.dataset.originalWhiteSpace;
             delete element.dataset.originalWhiteSpace;
           } else {
             element.style.whiteSpace = '';
           }
+          
+          // 清除修改标记
+          delete element.dataset.modified;
         }
       }
     });
   }
 
-  isImageInElement(elementTop, elementLeft, elementHeight, elementWidth) {
+  isImageInElement(elementTop, elementLeft, elementBottom, elementRight) {
+    // 检查图片（鼠标位置）是否在元素范围内
     const imageX = this.mouseX;
     const imageY = this.mouseY;
+    const imageLeft = imageX - this.size / 2;
+    const imageRight = imageX + this.size / 2;
+    const imageTop = imageY - this.size / 2;
+    const imageBottom = imageY + this.size / 2;
     
-    return imageX >= elementLeft && 
-           imageX <= elementLeft + elementWidth &&
-           imageY >= elementTop && 
-           imageY <= elementTop + elementHeight;
+    // 检查图片是否与元素有重叠
+    return !(imageRight < elementLeft || 
+             imageLeft > elementRight || 
+             imageBottom < elementTop || 
+             imageTop > elementBottom);
   }
 
   relayoutTextAroundImage(data, elementTop, elementLeft, maxWidth) {
@@ -224,6 +239,9 @@ class TextInteractionAnimation {
       
       element.textContent = newText;
       element.style.whiteSpace = 'pre-wrap';
+      
+      // 标记元素已被修改
+      element.dataset.modified = 'true';
     }
   }
 
@@ -365,9 +383,10 @@ class TextInteractionAnimation {
     if (this.animationElement) {
       this.animationElement.style.display = 'none';
     }
+    // 恢复所有文本和样式
     this.textElements.forEach((data) => {
       const element = data.element;
-      if (element.textContent !== data.originalText) {
+      if (element.dataset.modified === 'true' || element.textContent !== data.originalText) {
         element.textContent = data.originalText;
         
         if (element.dataset.originalWhiteSpace) {
@@ -376,6 +395,8 @@ class TextInteractionAnimation {
         } else {
           element.style.whiteSpace = '';
         }
+        
+        delete element.dataset.modified;
       }
     });
   }
