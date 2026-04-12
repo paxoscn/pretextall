@@ -1,4 +1,4 @@
-// 文字互动动画 - 使用 pretext 库实现
+// 文字互动动画 - 使用 pretext 实现文字避开图片效果
 // 基于 https://github.com/chenglou/pretext
 
 class TextInteractionAnimation {
@@ -12,7 +12,6 @@ class TextInteractionAnimation {
     this.mouseY = 0;
     this.animationElement = null;
     this.textElements = [];
-    this.preparedTexts = new Map(); // 存储 pretext 准备好的文本
     this.animationFrame = null;
     
     this.init();
@@ -36,20 +35,20 @@ class TextInteractionAnimation {
 
     if (this.enabled) {
       this.createAnimationElement();
-      this.scanAndPrepareText();
+      this.scanTextElements();
       this.startAnimation();
     }
 
     // 监听鼠标移动
     document.addEventListener('mousemove', (e) => {
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
+      this.mouseX = e.clientX + window.scrollX;
+      this.mouseY = e.clientY + window.scrollY;
     }, { passive: true });
 
-    // 监听页面变化，重新扫描文字
+    // 监听页面变化
     const observer = new MutationObserver(() => {
       if (this.enabled) {
-        this.scanAndPrepareText();
+        this.scanTextElements();
       }
     });
     observer.observe(document.body, { 
@@ -58,9 +57,16 @@ class TextInteractionAnimation {
     });
 
     // 监听滚动和窗口大小变化
-    window.addEventListener('scroll', () => this.updateTextPositions(), { passive: true });
+    window.addEventListener('scroll', () => {
+      if (this.enabled) {
+        this.relayoutAllText();
+      }
+    }, { passive: true });
+    
     window.addEventListener('resize', () => {
-      this.scanAndPrepareText();
+      if (this.enabled) {
+        this.scanTextElements();
+      }
     });
   }
 
@@ -97,14 +103,13 @@ class TextInteractionAnimation {
     document.body.appendChild(this.animationElement);
   }
 
-  scanAndPrepareText() {
+  scanTextElements() {
     this.textElements = [];
-    this.preparedTexts.clear();
 
-    // 获取所有可见的文本元素
-    const elements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, div, a, li, td, th, label, button');
+    // 只选择段落元素，避免处理太多小元素
+    const elements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, blockquote, li');
     
-    elements.forEach((element, index) => {
+    elements.forEach((element) => {
       const text = element.textContent.trim();
       if (text.length === 0) return;
 
@@ -114,139 +119,162 @@ class TextInteractionAnimation {
       const fontFamily = style.fontFamily;
       const fontWeight = style.fontWeight;
       const fontStyle = style.fontStyle;
+      const lineHeight = parseFloat(style.lineHeight) || parseFloat(fontSize) * 1.2;
       
-      // 构建 font 字符串（pretext 需要的格式）
+      // 构建 font 字符串
       const font = `${fontStyle !== 'normal' ? fontStyle + ' ' : ''}${fontWeight !== '400' ? fontWeight + ' ' : ''}${fontSize} ${fontFamily}`;
 
       try {
         // 使用 pretext 准备文本
-        if (typeof window.pretext !== 'undefined' && window.pretext.prepare) {
-          const prepared = window.pretext.prepare(text, font);
+        if (typeof window.pretext !== 'undefined' && window.pretext.prepareWithSegments) {
+          const prepared = window.pretext.prepareWithSegments(text, font);
+          
+          // 保存原始文本和样式
+          if (!element.dataset.originalText) {
+            element.dataset.originalText = text;
+          }
           
           this.textElements.push({
             element,
-            text,
+            prepared,
             font,
-            prepared,
-            index
-          });
-          
-          this.preparedTexts.set(index, {
-            prepared,
-            element,
-            bounds: null
+            lineHeight,
+            originalText: text
           });
         }
       } catch (e) {
-        // 如果 pretext 出错，跳过这个元素
         console.warn('Pretext preparation failed:', e);
       }
     });
 
-    this.updateTextPositions();
+    console.log(`Scanned ${this.textElements.length} text elements`);
+    this.relayoutAllText();
   }
 
-  updateTextPositions() {
-    this.preparedTexts.forEach((data, index) => {
-      const rect = data.element.getBoundingClientRect();
+  relayoutAllText() {
+    if (!window.pretext || !window.pretext.layoutNextLineRange) return;
+
+    this.textElements.forEach((data) => {
+      const element = data.element;
+      const rect = element.getBoundingClientRect();
       
-      if (rect.width > 0 && rect.height > 0) {
-        // 使用 pretext 的 layout 函数计算文本布局
-        try {
-          if (typeof window.pretext !== 'undefined' && window.pretext.layout) {
-            const layoutResult = window.pretext.layout(data.prepared, rect.width, parseFloat(window.getComputedStyle(data.element).lineHeight) || 20);
-            
-            data.bounds = {
-              left: rect.left + window.scrollX,
-              top: rect.top + window.scrollY,
-              right: rect.right + window.scrollX,
-              bottom: rect.bottom + window.scrollY,
-              width: rect.width,
-              height: layoutResult.height || rect.height,
-              centerX: rect.left + rect.width / 2,
-              centerY: rect.top + rect.height / 2,
-              lineCount: layoutResult.lineCount || 1
-            };
-          } else {
-            // 降级方案：直接使用元素边界
-            data.bounds = {
-              left: rect.left + window.scrollX,
-              top: rect.top + window.scrollY,
-              right: rect.right + window.scrollX,
-              bottom: rect.bottom + window.scrollY,
-              width: rect.width,
-              height: rect.height,
-              centerX: rect.left + rect.width / 2,
-              centerY: rect.top + rect.height / 2,
-              lineCount: 1
-            };
-          }
-        } catch (e) {
-          console.warn('Pretext layout failed:', e);
+      if (rect.width === 0 || rect.height === 0) return;
+
+      const elementTop = rect.top + window.scrollY;
+      const elementLeft = rect.left + window.scrollX;
+      const maxWidth = rect.width;
+
+      // 检查图片是否在这个元素的范围内
+      const imageInElement = this.isImageInElement(elementTop, elementLeft, rect.height, maxWidth);
+
+      if (imageInElement) {
+        // 使用 pretext 重新布局文字，让文字避开图片
+        this.relayoutTextAroundImage(data, elementTop, elementLeft, maxWidth);
+      } else {
+        // 恢复原始文本
+        if (element.textContent !== data.originalText) {
+          element.textContent = data.originalText;
         }
       }
     });
   }
 
-  calculateTextInfluence() {
-    let totalForceX = 0;
-    let totalForceY = 0;
-    let influenceCount = 0;
+  isImageInElement(elementTop, elementLeft, elementHeight, elementWidth) {
+    // 检查图片（鼠标位置）是否在元素范围内
+    const imageX = this.mouseX;
+    const imageY = this.mouseY;
+    
+    return imageX >= elementLeft && 
+           imageX <= elementLeft + elementWidth &&
+           imageY >= elementTop && 
+           imageY <= elementTop + elementHeight;
+  }
 
-    this.preparedTexts.forEach((data) => {
-      if (!data.bounds) return;
+  relayoutTextAroundImage(data, elementTop, elementLeft, maxWidth) {
+    if (!window.pretext.layoutNextLineRange || !window.pretext.materializeLineRange) return;
 
-      const bounds = data.bounds;
+    const { element, prepared, lineHeight } = data;
+    const lines = [];
+    let cursor = { segmentIndex: 0, graphemeIndex: 0 };
+    let y = 0;
+
+    // 逐行布局文字
+    while (true) {
+      // 计算当前行的可用宽度（考虑图片位置）
+      const lineY = elementTop + y;
+      const availableWidth = this.calculateAvailableWidth(
+        lineY, 
+        lineHeight, 
+        elementLeft, 
+        maxWidth
+      );
+
+      // 使用 pretext 布局这一行
+      const lineRange = window.pretext.layoutNextLineRange(prepared, cursor, availableWidth);
       
-      // 计算鼠标到文本区域中心的距离
-      const dx = bounds.centerX - this.mouseX;
-      const dy = bounds.centerY - this.mouseY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (lineRange === null) break;
 
-      if (distance < this.radius && distance > 0) {
-        // 计算排斥力
-        const force = (1 - distance / this.radius) * (this.intensity / 50);
-        
-        // 根据文本的行数调整力度（更多文字 = 更强的力）
-        const textFactor = Math.min(data.bounds.lineCount / 3, 1.5);
-        
-        totalForceX += (dx / distance) * force * 30 * textFactor;
-        totalForceY += (dy / distance) * force * 30 * textFactor;
-        influenceCount++;
+      const line = window.pretext.materializeLineRange(prepared, lineRange);
+      lines.push(line.text);
+      
+      cursor = lineRange.end;
+      y += lineHeight;
+    }
+
+    // 更新元素文本
+    const newText = lines.join('\n');
+    if (element.textContent !== newText) {
+      element.textContent = newText;
+      element.style.whiteSpace = 'pre-wrap';
+    }
+  }
+
+  calculateAvailableWidth(lineY, lineHeight, elementLeft, maxWidth) {
+    // 检查图片是否与当前行重叠
+    const imageTop = this.mouseY - this.size / 2;
+    const imageBottom = this.mouseY + this.size / 2;
+    const imageLeft = this.mouseX - this.size / 2;
+    const imageRight = this.mouseX + this.size / 2;
+
+    const lineBottom = lineY + lineHeight;
+
+    // 如果图片与当前行重叠
+    if (imageBottom >= lineY && imageTop <= lineBottom) {
+      const imageRelativeLeft = imageLeft - elementLeft;
+      const imageRelativeRight = imageRight - elementLeft;
+
+      // 图片在左侧
+      if (imageRelativeLeft < maxWidth / 2) {
+        const cutoff = Math.max(0, imageRelativeRight + 10); // 10px 间距
+        return maxWidth - cutoff;
       }
-    });
+      // 图片在右侧
+      else {
+        const cutoff = Math.max(0, imageRelativeLeft - 10);
+        return cutoff;
+      }
+    }
 
-    return {
-      x: totalForceX,
-      y: totalForceY,
-      hasInfluence: influenceCount > 0
-    };
+    return maxWidth;
   }
 
   animate() {
     if (!this.enabled || !this.animationElement) return;
 
-    // 确保有鼠标位置（初始化时可能为 0）
+    // 确保有鼠标位置
     if (this.mouseX === 0 && this.mouseY === 0) {
       this.animationFrame = requestAnimationFrame(() => this.animate());
       return;
     }
 
-    const influence = this.calculateTextInfluence();
-    
-    // 动画跟随鼠标，但受文字影响而偏移
-    const targetX = this.mouseX + influence.x - this.size / 2;
-    const targetY = this.mouseY + influence.y - this.size / 2;
+    // 更新动画位置（跟随鼠标）
+    const targetX = this.mouseX - this.size / 2 - window.scrollX;
+    const targetY = this.mouseY - this.size / 2 - window.scrollY;
 
-    // 添加轻微的弹性效果
-    const scale = influence.hasInfluence ? 1.2 : 1;
-    const rotation = influence.x * 0.5;
+    this.animationElement.style.transform = `translate(${targetX}px, ${targetY}px)`;
 
-    this.animationElement.style.transform = `
-      translate(${targetX}px, ${targetY}px)
-      scale(${scale})
-      rotate(${rotation}deg)
-    `;
+    // 重新布局文字
+    this.relayoutAllText();
 
     this.animationFrame = requestAnimationFrame(() => this.animate());
   }
@@ -267,6 +295,13 @@ class TextInteractionAnimation {
     if (this.animationElement) {
       this.animationElement.style.display = 'none';
     }
+    // 恢复所有文本
+    this.textElements.forEach((data) => {
+      if (data.element.textContent !== data.originalText) {
+        data.element.textContent = data.originalText;
+        data.element.style.whiteSpace = '';
+      }
+    });
   }
 
   toggle(enabled) {

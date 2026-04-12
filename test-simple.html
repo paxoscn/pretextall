@@ -3,51 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>简单测试页面</title>
+  <title>文字避开图片测试</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 50px;
-      line-height: 1.6;
+      line-height: 1.8;
+      max-width: 800px;
+      margin: 0 auto;
     }
     h1 {
       color: #333;
+      margin-bottom: 30px;
     }
     p {
       margin: 20px 0;
       font-size: 18px;
+      text-align: justify;
     }
-    .box {
-      background: #f0f0f0;
+    .instructions {
+      background: #fffbcc;
+      border: 2px solid #ffeb3b;
       padding: 20px;
-      margin: 20px 0;
       border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .instructions h2 {
+      margin-top: 0;
+      color: #f57c00;
     }
   </style>
 </head>
 <body>
-  <h1>测试页面</h1>
+  <h1>🎨 文字避开图片效果测试</h1>
   
-  <p>这是一段测试文字。移动鼠标到这里，看看动画是否会被推开。</p>
-  
-  <div class="box">
-    <h2>文字区域</h2>
-    <p>这里有更多的文字内容。动画应该会被这些文字影响。</p>
-    <p>尝试在不同的文字区域移动鼠标。</p>
+  <div class="instructions">
+    <h2>使用说明</h2>
+    <p><strong>1.</strong> 确保插件已启用（点击浏览器工具栏的插件图标）</p>
+    <p><strong>2.</strong> 移动鼠标到下面的段落文字上</p>
+    <p><strong>3.</strong> 观察文字如何重新排列以避开图片（鼠标光标）</p>
+    <p><strong>4.</strong> 尝试慢慢移动鼠标，看文字如何动态调整</p>
   </div>
-  
-  <p>下面是一些密集的文字：</p>
+
+  <h2>测试段落 1</h2>
   <p>
-    文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
-    文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
-    文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+    这是一段很长的测试文字，用来演示文字避开图片的效果。当你移动鼠标到这段文字上时，
+    文字应该会重新排列，在图片周围流动。这个效果使用了 pretext 库的动态布局功能，
+    可以实时计算每一行的可用宽度，然后重新排列文字。试着慢慢移动鼠标，观察文字如何
+    优雅地避开图片，就像水流绕过石头一样。这种效果在传统的 CSS 中很难实现，
+    但是通过 pretext 的强大文本布局能力，我们可以轻松做到。
   </p>
-  
-  <script>
-    // 显示鼠标位置用于调试
-    document.addEventListener('mousemove', (e) => {
-      console.log('Mouse position:', e.clientX, e.clientY);
-    });
-  </script>
+
+  <h2>测试段落 2</h2>
+  <p>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor 
+    incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud 
+    exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute 
+    irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla 
+    pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia 
+    deserunt mollit anim id est laborum.
+  </p>
+
+  <h2>测试段落 3 - 中文</h2>
+  <p>
+    在这个段落中，我们使用中文来测试文字避开效果。中文的排版和英文有所不同，
+    每个汉字都是等宽的，这使得排版计算更加简单。当鼠标移动到这段文字上时，
+    你应该能看到汉字如何重新排列，在图片的左侧或右侧流动。pretext 库支持
+    多种语言，包括中文、日文、韩文、阿拉伯文等。这个功能对于国际化的网站
+    非常有用。试着在不同的位置移动鼠标，看看文字如何适应不同的布局。
+  </p>
+
+  <h2>测试段落 4 - 更长的文本</h2>
+  <p>
+    这是一个更长的段落，包含了更多的文字内容。文字越多，避开效果就越明显。
+    当图片（鼠标光标）移动到文字区域时，pretext 会计算每一行可以使用的宽度。
+    如果图片在左侧，文字就会从右侧流过；如果图片在右侧，文字就会从左侧流过。
+    这个过程是实时的，每一帧都会重新计算。虽然这听起来很消耗性能，但是 pretext
+    使用了高效的算法，可以在保持流畅的同时提供精确的布局。你可以尝试快速移动
+    鼠标，看看文字是否能够跟上。在大多数情况下，你应该能看到流畅的动画效果，
+    文字像液体一样在图片周围流动。这种效果不仅美观，而且非常实用，可以用于
+    创建更加动态和互动的网页体验。
+  </p>
+
+  <h2>测试段落 5 - 混合内容</h2>
+  <p>
+    This paragraph contains both English and 中文内容. When you move the mouse over 
+    this text, 文字应该会避开图片. The pretext library handles mixed-language content 
+    很好地, ensuring that 每种语言的排版规则 are respected. Try moving the mouse 
+    slowly across this paragraph to see how the text reflows around the image. 
+    这个效果在处理多语言内容时特别有用。
+  </p>
+
+  <h2>调试信息</h2>
+  <p style="font-size: 14px; color: #666;">
+    打开浏览器控制台（F12）查看调试信息。你应该能看到：<br>
+    - "Text Interaction Animation initialized" - 插件已初始化<br>
+    - "Scanned X text elements" - 扫描到的文本元素数量<br>
+    - "Starting animation..." - 动画已启动
+  </p>
 </body>
 </html>
