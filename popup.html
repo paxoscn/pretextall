@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字互动动画设置</title>
+  <style>
+    body {
+      width: 320px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+    }
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      color: #333;
+    }
+    .control-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #555;
+      font-weight: 500;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .file-button {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .file-button:hover {
+      background: #45a049;
+    }
+    .preview {
+      margin-top: 8px;
+      max-width: 100%;
+      max-height: 100px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      display: none;
+    }
+    .preview.show {
+      display: block;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    .range-value {
+      display: inline-block;
+      margin-left: 8px;
+      font-weight: 600;
+      color: #4CAF50;
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+    .status {
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎨 文字互动动画</h2>
+  
+  <div class="control-group">
+    <div class="toggle-container">
+      <label for="enabled">启用动画</label>
+      <label class="toggle">
+        <input type="checkbox" id="enabled" checked>
+        <span class="slider"></span>
+      </label>
+      <span class="status" id="status">已启用</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label for="imageUpload">选择动画图片</label>
+    <label for="imageUpload" class="file-button">📁 选择图片</label>
+    <input type="file" id="imageUpload" accept="image/*">
+    <img id="preview" class="preview" alt="预览">
+  </div>
+
+  <div class="control-group">
+    <label for="size">动画大小: <span class="range-value" id="sizeValue">50px</span></label>
+    <input type="range" id="size" min="20" max="200" value="50">
+  </div>
+
+  <div class="control-group">
+    <label for="intensity">互动强度: <span class="range-value" id="intensityValue">50</span></label>
+    <input type="range" id="intensity" min="10" max="100" value="50">
+  </div>
+
+  <div class="control-group">
+    <label for="radius">影响半径: <span class="range-value" id="radiusValue">100px</span></label>
+    <input type="range" id="radius" min="50" max="300" value="100">
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

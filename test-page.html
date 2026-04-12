@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字互动动画测试页面</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 60px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      font-size: 48px;
+      color: #667eea;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .subtitle {
+      text-align: center;
+      font-size: 20px;
+      color: #666;
+      margin-bottom: 40px;
+    }
+    
+    .section {
+      margin-bottom: 40px;
+    }
+    
+    h2 {
+      font-size: 32px;
+      color: #764ba2;
+      margin-bottom: 20px;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+    
+    p {
+      font-size: 18px;
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+    
+    .highlight {
+      background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 10px;
+      margin: 30px 0;
+    }
+    
+    .highlight h3 {
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+    
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin: 30px 0;
+    }
+    
+    .column {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .column h3 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    
+    .dense-text {
+      columns: 2;
+      column-gap: 40px;
+      text-align: justify;
+    }
+    
+    .quote {
+      font-size: 24px;
+      font-style: italic;
+      color: #764ba2;
+      text-align: center;
+      padding: 30px;
+      border-left: 5px solid #667eea;
+      margin: 30px 0;
+      background: #f8f9fa;
+    }
+    
+    .instructions {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 30px 0;
+    }
+    
+    .instructions h3 {
+      color: #856404;
+      margin-bottom: 10px;
+    }
+    
+    .instructions ul {
+      margin-left: 20px;
+    }
+    
+    .instructions li {
+      margin-bottom: 8px;
+    }
+    
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 2px solid #e0e0e0;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 文字互动动画测试页面</h1>
+    <p class="subtitle">移动鼠标，观察动画如何与文字互动！</p>
+    
+    <div class="instructions">
+      <h3>📋 使用说明</h3>
+      <ul>
+        <li>确保已安装"文字互动动画"Chrome 插件</li>
+        <li>点击浏览器工具栏的插件图标，确保"启用动画"已打开</li>
+        <li>在页面上移动鼠标，观察动画被文字"推开"的效果</li>
+        <li>尝试调整插件设置中的参数，体验不同效果</li>
+      </ul>
+    </div>
+    
+    <div class="section">
+      <h2>什么是文字互动动画？</h2>
+      <p>
+        文字互动动画是一个创新的 Chrome 浏览器插件，它让自定义的动画元素能够跟随鼠标移动，
+        并与网页上的文字产生物理互动效果。当动画靠近文字时，会被文字"推开"，
+        创造出独特而有趣的视觉体验。
+      </p>
+      <p>
+        这个项目的灵感来源于 Cheng Lou 的 pretext 库，该库提供了高效的文字布局和测量方案。
+        我们借鉴了其核心思想，实现了实时的文字位置检测和物理计算系统。
+      </p>
+    </div>
+    
+    <div class="highlight">
+      <h3>✨ 核心特性</h3>
+      <p>
+        支持自定义图片上传、实时参数调节、流畅的 60fps 动画、智能的文字检测、
+        物理引擎驱动的互动效果，以及跨设备的设置同步。
+      </p>
+    </div>
+    
+    <div class="section">
+      <h2>技术原理</h2>
+      <div class="columns">
+        <div class="column">
+          <h3>🔍 文字检测</h3>
+          <p>
+            使用 TreeWalker API 遍历 DOM 树，通过 Range.getClientRects() 
+            获取每个文本节点的精确位置，并缓存到 Map 数据结构中以提高性能。
+          </p>
+        </div>
+        <div class="column">
+          <h3>⚡ 物理计算</h3>
+          <p>
+            实现了基于反平方衰减的排斥力模型。计算鼠标与每个文字之间的距离，
+            在影响半径内生成排斥力向量，多个文字的力进行向量叠加。
+          </p>
+        </div>
+        <div class="column">
+          <h3>🎬 动画渲染</h3>
+          <p>
+            使用 requestAnimationFrame 实现 60fps 流畅动画，
+            通过 CSS transform 属性触发 GPU 硬件加速，
+            确保动画性能和视觉效果的完美平衡。
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>密集文字测试区域</h2>
+      <div class="dense-text">
+        <p>
+          在这个区域，文字排列得更加密集，可以更好地测试动画的互动效果。
+          当你移动鼠标穿过这些文字时，会发现动画被多个文字同时影响，
+          产生更加复杂和有趣的运动轨迹。这种效果在新闻网站、博客文章等
+          文字密集的页面上尤为明显。
+        </p>
+        <p>
+          物理引擎会计算动画与每个文字之间的距离，并根据距离生成相应的排斥力。
+          距离越近，排斥力越强；距离越远，排斥力越弱。当多个文字同时在影响范围内时，
+          它们的力会进行向量叠加，最终决定动画的运动方向和速度。
+        </p>
+        <p>
+          你可以通过调整插件设置中的"互动强度"和"影响半径"参数来改变这种互动效果。
+          较高的强度会让动画被推得更远，较大的半径会让更多的文字参与到互动中。
+          尝试不同的参数组合，找到最适合你的设置！
+        </p>
+      </div>
+    </div>
+    
+    <div class="quote">
+      "好的设计不仅要美观，更要有趣。"
+    </div>
+    
+    <div class="section">
+      <h2>使用场景</h2>
+      <p>
+        <strong>日常浏览：</strong>在阅读文章、浏览新闻时，轻微的互动效果可以让浏览体验更加生动有趣，
+        同时不会过分分散注意力。
+      </p>
+      <p>
+        <strong>演示展示：</strong>在进行屏幕录制或演示时，明显的动画效果可以吸引观众的注意力，
+        帮助引导视线到重要内容上。
+      </p>
+      <p>
+        <strong>创意表达：</strong>通过上传个性化的图片（如你喜欢的卡通形象、宠物照片等），
+        可以让浏览器变成你独特的创意空间。
+      </p>
+    </div>
+    
+    <div class="section">
+      <h2>自定义建议</h2>
+      <div class="columns">
+        <div class="column">
+          <h3>🎨 图片选择</h3>
+          <p>
+            推荐使用透明背景的 PNG 图片，尺寸在 100x100 到 500x500 像素之间。
+            可以选择表情符号、卡通形象、小动物、几何图形等。
+          </p>
+        </div>
+        <div class="column">
+          <h3>⚙️ 参数调节</h3>
+          <p>
+            文字密集的页面建议增大半径、降低强度；文字稀疏的页面建议减小半径、提高强度。
+            根据个人喜好调整到最舒适的状态。
+          </p>
+        </div>
+        <div class="column">
+          <h3>🎯 场景切换</h3>
+          <p>
+            为不同场景准备不同的配置：日常浏览用小尺寸低强度，
+            演示展示用大尺寸高强度，专注阅读用中等参数。
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>性能说明</h2>
+      <p>
+        插件经过精心优化，在大多数情况下都能保持流畅的 60fps 动画效果。
+        我们使用了多种性能优化技术：
+      </p>
+      <ul style="margin-left: 40px; margin-top: 15px;">
+        <li>文字位置缓存，避免重复的 DOM 查询</li>
+        <li>使用 Map 数据结构提高查找效率</li>
+        <li>GPU 硬件加速的 CSS transform 动画</li>
+        <li>requestAnimationFrame 同步屏幕刷新率</li>
+        <li>被动事件监听器减少性能开销</li>
+        <li>智能的 DOM 变化监听和更新策略</li>
+      </ul>
+      <p style="margin-top: 15px;">
+        在极端情况下（如文字特别密集的页面），可能会有轻微的性能影响。
+        此时可以通过减小"影响半径"参数来降低计算量，或者暂时禁用插件。
+      </p>
+    </div>
+    
+    <div class="highlight">
+      <h3>💡 小贴士</h3>
+      <p>
+        试试在不同类型的网站上使用这个插件：新闻网站、博客、社交媒体、代码网站等。
+        每种网站的文字布局都不同，会产生不同的互动效果。
+        你也可以尝试上传不同的图片，创造属于你自己的独特体验！
+      </p>
+    </div>
+    
+    <div class="section">
+      <h2>常见问题</h2>
+      <p>
+        <strong>Q: 为什么某些网站上看不到效果？</strong><br>
+        A: 某些网站（如 Chrome 内部页面、扩展商店）出于安全原因不允许插件运行。
+        另外，使用 Shadow DOM 的网站可能无法完全检测到文字。
+      </p>
+      <p>
+        <strong>Q: 如何让效果更明显？</strong><br>
+        A: 增加"互动强度"和"影响半径"参数，或者使用更大、更醒目的图片。
+      </p>
+      <p>
+        <strong>Q: 感觉有点卡顿怎么办？</strong><br>
+        A: 减小"影响半径"可以降低计算量，提高性能。也可以使用更小的图片文件。
+      </p>
+      <p>
+        <strong>Q: 可以同时运行多个动画吗？</strong><br>
+        A: 当前版本只支持单个动画，多动画功能在未来版本的计划中。
+      </p>
+    </div>
+    
+    <div class="section">
+      <h2>测试建议</h2>
+      <p>
+        在这个测试页面上，你可以尝试以下操作来充分体验插件的功能：
+      </p>
+      <ol style="margin-left: 40px; margin-top: 15px;">
+        <li>在标题和正文之间移动鼠标，观察动画如何避让文字</li>
+        <li>在密集文字区域快速移动鼠标，感受复杂的互动效果</li>
+        <li>调整插件参数，对比不同设置下的效果差异</li>
+        <li>上传不同的图片，看看哪种图片效果最好</li>
+        <li>尝试在页面边缘移动鼠标，观察边界情况</li>
+        <li>滚动页面，测试动画在滚动时的表现</li>
+      </ol>
+    </div>
+    
+    <div class="footer">
+      <p>
+        <strong>文字互动动画 Chrome 插件</strong><br>
+        灵感来源于 <a href="https://github.com/chenglou/pretext" target="_blank">pretext</a> by Cheng Lou<br>
+        让浏览体验更加生动有趣 ✨
+      </p>
+      <p style="margin-top: 20px; font-size: 14px;">
+        查看 <code>README.md</code> 了解更多信息 | 
+        查看 <code>EXAMPLES.md</code> 获取使用技巧 | 
+        查看 <code>DEVELOPMENT.md</code> 学习开发知识
+      </p>
+    </div>
+  </div>
+</body>
+</html>
