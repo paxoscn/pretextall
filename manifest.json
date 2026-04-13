@@ -25,7 +25,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "pretext-lib/*"],
+      "resources": ["icons/*", "pretext-lib/*", "dog.gif"],
       "matches": ["<all_urls>"]
     }
   ]

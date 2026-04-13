@@ -84,9 +84,11 @@ class TextInteractionAnimation {
       this.animationElement.style.backgroundRepeat = 'no-repeat';
       this.animationElement.style.backgroundPosition = 'center';
     } else {
-      this.animationElement.style.background = 'radial-gradient(circle, rgba(255,100,150,0.8), rgba(100,150,255,0.8))';
-      this.animationElement.style.borderRadius = '50%';
-      this.animationElement.style.boxShadow = '0 0 20px rgba(255,100,150,0.6)';
+      // 默认使用 dog.gif
+      this.animationElement.style.backgroundImage = `url(${chrome.runtime.getURL('dog.gif')})`;
+      this.animationElement.style.backgroundSize = 'contain';
+      this.animationElement.style.backgroundRepeat = 'no-repeat';
+      this.animationElement.style.backgroundPosition = 'center';
     }
 
     document.body.appendChild(this.animationElement);
