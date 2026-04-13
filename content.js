@@ -13,8 +13,6 @@ class TextInteractionAnimation {
     this.animationElement = null;
     this.textElements = [];
     this.animationFrame = null;
-    this.canvas = null; // 用于测量文字宽度
-    this.ctx = null;
     
     this.init();
   }
@@ -26,10 +24,6 @@ class TextInteractionAnimation {
     this.size = settings.size || 50;
     this.intensity = settings.intensity || 50;
     this.radius = settings.radius || 100;
-
-    // 创建 Canvas 用于测量文字宽度
-    this.canvas = document.createElement('canvas');
-    this.ctx = this.canvas.getContext('2d');
 
     console.log('Text Interaction Animation initialized');
 
@@ -211,7 +205,7 @@ class TextInteractionAnimation {
 
       // 如果左右两侧都有空间，尝试拆分文字
       if (layoutInfo.leftWidth > 0 && layoutInfo.rightWidth > 0) {
-        const splitLine = this.layoutSplitLine(prepared, cursor, layoutInfo, fontSize);
+        const splitLine = this.layoutSplitLine(prepared, cursor, layoutInfo, fontSize, font);
         if (splitLine) {
           lines.push(splitLine.text);
           cursor = splitLine.cursor;
@@ -229,8 +223,8 @@ class TextInteractionAnimation {
       
       let lineText = line.text;
       if (layoutInfo.indent > 0) {
-        this.ctx.font = font;
-        const spaceWidth = this.ctx.measureText(' ').width;
+        // 使用 pretext 测量空格宽度
+        const spaceWidth = this.measureTextWidth(' ', font);
         const spaces = Math.ceil(layoutInfo.indent / spaceWidth);
         lineText = ' '.repeat(Math.max(0, spaces)) + lineText;
       }
@@ -255,7 +249,7 @@ class TextInteractionAnimation {
     }
   }
 
-  layoutSplitLine(prepared, cursor, layoutInfo, fontSize) {
+  layoutSplitLine(prepared, cursor, layoutInfo, fontSize, font) {
     if (!window.pretext.layoutNextLineRange || !window.pretext.materializeLineRange) return null;
 
     const minWidth = 30;
@@ -278,10 +272,8 @@ class TextInteractionAnimation {
 
     const rightLine = window.pretext.materializeLineRange(prepared, rightRange);
     
-    // 使用 Canvas 精确测量空格宽度
-    const font = layoutInfo.font || `${fontSize}px Arial`;
-    this.ctx.font = font;
-    const spaceWidth = this.ctx.measureText(' ').width;
+    // 使用 pretext 测量空格宽度
+    const spaceWidth = this.measureTextWidth(' ', font);
     
     // 计算需要填充的宽度
     // 从左侧文字结束位置到右侧文字开始位置的距离
@@ -300,6 +292,23 @@ class TextInteractionAnimation {
     const combinedText = leftLine.text + ' '.repeat(spaces) + rightLine.text;
     
     return { text: combinedText, cursor: rightRange.end };
+  }
+
+  // 使用 pretext 测量文字宽度
+  measureTextWidth(text, font) {
+    if (!window.pretext || !window.pretext.getMeasureContext) {
+      // 降级到简单估算
+      return text.length * 8;
+    }
+    
+    try {
+      const ctx = window.pretext.getMeasureContext();
+      ctx.font = font;
+      return ctx.measureText(text).width;
+    } catch (e) {
+      console.warn('Pretext measurement failed:', e);
+      return text.length * 8;
+    }
   }
 
   calculateLineLayout(lineY, lineHeight, elementLeft, maxWidth) {
