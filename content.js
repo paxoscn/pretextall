@@ -87,7 +87,7 @@ class TextInteractionAnimation {
     const elements = document.querySelectorAll('div.heading-block, div.text-block, div.code-line-wrapper, p, h1, h2, h3, h4, h5, h6, blockquote, li');
     
     elements.forEach((element) => {
-      const text = element.textContent.trim();
+      const text = element.dataset.originalText ? element.dataset.originalText : element.textContent.trim();
       if (text.length === 0) return;
 
       const style = window.getComputedStyle(element);
