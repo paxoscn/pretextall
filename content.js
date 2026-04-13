@@ -194,12 +194,15 @@ class TextInteractionAnimation {
 
   isImageInElement(elementTop, elementLeft, elementBottom, elementRight) {
     // 检查图片（鼠标位置）是否在元素范围内
-    const imageX = this.mouseX;
-    const imageY = this.mouseY;
-    const imageLeft = imageX - this.size / 2;
-    const imageRight = imageX + this.size / 2;
-    const imageTop = imageY - this.size / 2;
-    const imageBottom = imageY + this.size / 2;
+    // 图片位置在鼠标右下方
+    const offsetX = 30;
+    const offsetY = 30;
+    const imageX = this.mouseX + offsetX;
+    const imageY = this.mouseY + offsetY;
+    const imageLeft = imageX;
+    const imageRight = imageX + this.size;
+    const imageTop = imageY;
+    const imageBottom = imageY + this.size;
     
     // 检查图片是否与元素有重叠
     return !(imageRight < elementLeft || 
@@ -323,10 +326,13 @@ class TextInteractionAnimation {
   }
 
   calculateLineLayout(lineY, lineHeight, elementLeft, maxWidth) {
-    const imageTop = this.mouseY - this.size / 2;
-    const imageBottom = this.mouseY + this.size / 2;
-    const imageLeft = this.mouseX - this.size / 2;
-    const imageRight = this.mouseX + this.size / 2;
+    // 图片位置在鼠标右下方
+    const offsetX = 30;
+    const offsetY = 30;
+    const imageTop = this.mouseY + offsetY;
+    const imageBottom = this.mouseY + offsetY + this.size;
+    const imageLeft = this.mouseX + offsetX;
+    const imageRight = this.mouseX + offsetX + this.size;
 
     const lineBottom = lineY + lineHeight;
     const gap = 10;
@@ -404,8 +410,11 @@ class TextInteractionAnimation {
       return;
     }
 
-    const targetX = this.mouseX - this.size / 2 - window.scrollX;
-    const targetY = this.mouseY - this.size / 2 - window.scrollY;
+    // 图片位置在鼠标右下方（添加一点偏移量）
+    const offsetX = 30; // 向右偏移10像素
+    const offsetY = 30; // 向下偏移10像素
+    const targetX = this.mouseX + offsetX - window.scrollX;
+    const targetY = this.mouseY + offsetY - window.scrollY;
 
     this.animationElement.style.transform = `translate(${targetX}px, ${targetY}px)`;
     
