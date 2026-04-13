@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "文字互动动画",
+  "name": "PreTextAll",
   "version": "1.0.0",
   "description": "让自定义动画跟随鼠标与网页文字产生互动效果",
   "permissions": [
