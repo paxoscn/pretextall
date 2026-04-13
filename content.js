@@ -15,6 +15,10 @@ class TextInteractionAnimation {
     this.animationFrame = null;
     this.canvas = null; // 用于测量文字宽度
     this.ctx = null;
+    this.scanTimeout = null; // 用于防抖
+    this.lastMouseX = 0;
+    this.lastMouseY = 0;
+    this.mouseMoveThreshold = 5; // 鼠标移动阈值（像素）
     
     this.init();
   }
@@ -45,7 +49,7 @@ class TextInteractionAnimation {
     }, { passive: true });
 
     const observer = new MutationObserver(() => {
-      if (this.enabled) this.scanTextElements();
+      if (this.enabled) this.debounceScanTextElements();
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
@@ -54,7 +58,7 @@ class TextInteractionAnimation {
     }, { passive: true });
     
     window.addEventListener('resize', () => {
-      if (this.enabled) this.scanTextElements();
+      if (this.enabled) this.debounceScanTextElements();
     });
   }
 
@@ -88,9 +92,19 @@ class TextInteractionAnimation {
     document.body.appendChild(this.animationElement);
   }
 
+  // 防抖版本的 scanTextElements
+  debounceScanTextElements() {
+    if (this.scanTimeout) {
+      clearTimeout(this.scanTimeout);
+    }
+    this.scanTimeout = setTimeout(() => {
+      this.scanTextElements();
+    }, 300); // 300ms 防抖延迟
+  }
+
   scanTextElements() {
     this.textElements = [];
-    const elements = document.querySelectorAll('div.heading-block, div.text-block, div.code-line-wrapper, p, h1, h2, h3, h4, h5, h6, blockquote, li');
+    const elements = document.querySelectorAll('div.heading-block, div.text-block, div.list, h1, h2, h3, h4, h5, h6');
     
     elements.forEach((element) => {
       const text = element.dataset.originalText ? element.dataset.originalText : element.textContent.trim();
@@ -113,13 +127,19 @@ class TextInteractionAnimation {
             element.dataset.originalText = text;
           }
           
+          // 保存原始 HTML 结构
+          if (!element.dataset.originalHTML) {
+            element.dataset.originalHTML = element.innerHTML;
+          }
+          
           this.textElements.push({
             element,
             prepared,
             font,
             lineHeight,
             fontSize: parseFloat(fontSize),
-            originalText: text
+            originalText: text,
+            originalHTML: element.dataset.originalHTML
           });
         }
       } catch (e) {
@@ -153,9 +173,9 @@ class TextInteractionAnimation {
         // 使用 pretext 重新布局文字，让文字环绕图片
         this.relayoutTextAroundImage(data, elementTop, elementLeft, maxWidth);
       } else {
-        // 恢复原始文本和样式
-        if (element.dataset.modified === 'true' || element.textContent !== data.originalText) {
-          element.textContent = data.originalText;
+        // 恢复原始 HTML 和样式
+        if (element.dataset.modified === 'true') {
+          element.innerHTML = data.originalHTML;
           
           // 恢复原有的 white-space 样式
           if (element.dataset.originalWhiteSpace) {
@@ -388,7 +408,16 @@ class TextInteractionAnimation {
     const targetY = this.mouseY - this.size / 2 - window.scrollY;
 
     this.animationElement.style.transform = `translate(${targetX}px, ${targetY}px)`;
-    this.relayoutAllText();
+    
+    // 只有当鼠标移动超过阈值时才重新布局文字
+    const dx = Math.abs(this.mouseX - this.lastMouseX);
+    const dy = Math.abs(this.mouseY - this.lastMouseY);
+    
+    if (dx > this.mouseMoveThreshold || dy > this.mouseMoveThreshold) {
+      this.relayoutAllText();
+      this.lastMouseX = this.mouseX;
+      this.lastMouseY = this.mouseY;
+    }
 
     this.animationFrame = requestAnimationFrame(() => this.animate());
   }
@@ -407,11 +436,11 @@ class TextInteractionAnimation {
     if (this.animationElement) {
       this.animationElement.style.display = 'none';
     }
-    // 恢复所有文本和样式
+    // 恢复所有 HTML 和样式
     this.textElements.forEach((data) => {
       const element = data.element;
-      if (element.dataset.modified === 'true' || element.textContent !== data.originalText) {
-        element.textContent = data.originalText;
+      if (element.dataset.modified === 'true') {
+        element.innerHTML = data.originalHTML;
         
         if (element.dataset.originalWhiteSpace) {
           element.style.whiteSpace = element.dataset.originalWhiteSpace;

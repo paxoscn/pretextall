@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试内部样式保留</title>
+  <style>
+    body {
+      padding: 40px;
+      font-family: Arial, sans-serif;
+    }
+    .text-block {
+      max-width: 600px;
+      margin: 20px 0;
+      padding: 20px;
+      background: #f5f5f5;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>测试内部样式保留</h1>
+  
+  <div class="text-block">
+    这是一段包含<span style="color: red; font-weight: bold;">红色粗体</span>文字的段落，
+    还有<span style="color: blue; font-style: italic;">蓝色斜体</span>文字，
+    以及<span style="background-color: yellow;">黄色背景</span>的文字。
+    当图片靠近时，这些样式应该被保留。
+  </div>
+
+  <div class="text-block">
+    <p style="color: green; font-size: 18px;">
+      这是一个带有绿色和大字号样式的段落。
+      <strong>这里有加粗文字</strong>，
+      <em>这里有斜体文字</em>，
+      <u>这里有下划线文字</u>。
+    </p>
+  </div>
+
+  <div class="text-block">
+    测试<a href="#" style="color: purple; text-decoration: underline;">链接样式</a>的保留，
+    以及<code style="background: #e0e0e0; padding: 2px 4px; border-radius: 3px;">代码样式</code>的保留。
+  </div>
+</body>
+</html>
